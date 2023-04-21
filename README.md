@@ -1,0 +1,2 @@
+# seafoodindex
+Norwegian seafood-index
