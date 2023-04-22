@@ -1,5 +1,6 @@
 from yahooquery import Ticker
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 
@@ -65,6 +66,49 @@ plt.title("Market Cap Evolution for Top 5 Companies and Combined Market Cap (Pas
 plt.legend()
 plt.show()
 
+TICKERS = ["bakka.ol", "mowi.ol", "salm.ol", "gsf.ol", "andf.ol", "lsg.ol",
+           "auss.ol", "salme.ol", "nohal.ol", "king.ol"]
 
+# Calculate the expected upside for each stock
+expected_upside = {ticker: (price_df[ticker]['targetMeanPrice'] - price_df[ticker]['currentPrice']) / price_df[ticker]['currentPrice'] * 100
+                   for ticker in TICKERS}
+
+# Calculate the target range for each stock
+target_ranges = {ticker: [(price_df[ticker]['targetLowPrice'] - price_df[ticker]['currentPrice']) / price_df[ticker]['currentPrice'] * 100,
+                          (price_df[ticker]['targetHighPrice'] - price_df[ticker]['currentPrice']) / price_df[ticker]['currentPrice'] * 100]
+                 for ticker in TICKERS}
+
+# Calculate the average expected upside for the industry
+industry_upside = np.mean(list(expected_upside.values()))
+
+# Plot the expected upside for each stock
+fig, ax = plt.subplots(figsize=(12, 6))
+bars = ax.bar(expected_upside.keys(), expected_upside.values())
+
+# Plot the target high and target low for each ticker as error bars
+for i, ticker in enumerate(TICKERS):
+    ax.errorbar(x=i, y=expected_upside[ticker],
+                yerr=[[expected_upside[ticker] - target_ranges[ticker][0]],
+                      [target_ranges[ticker][1] - expected_upside[ticker]]],
+                capsize=5, color='black', linestyle='None')
+
+# Plot the average expected upside for the industry as a horizontal line
+ax.axhline(industry_upside, color='r', linestyle='--', label='Industry Average')
+
+# Annotate the bars with the percentage values
+for bar in bars:
+    height = bar.get_height()
+    ax.annotate(f"{height:.2f}%",
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3),  # 3 points vertical offset
+                textcoords="offset points",
+                ha='center', va='bottom')
+
+ax.set_xlabel("Ticker")
+ax.set_ylabel("Expected Upside (%)")
+ax.set_title("Expected Upside: Consensus Price Target vs. Current Price with Target Range")
+ax.legend()
+
+plt.show()
 
 
